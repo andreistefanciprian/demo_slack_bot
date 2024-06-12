@@ -25,7 +25,7 @@ class SlackMessageChecker:
         return int(target_time)
 
     def __is_older_than_days(self, ts):
-        """Check if a message is older than 5 days."""
+        """Check if a message is older than x days."""
         message_time = datetime.fromtimestamp(float(ts))
         return datetime.now() - message_time > timedelta(days=self.SLACK_MESSAGE_AGE_LIMIT)
 
