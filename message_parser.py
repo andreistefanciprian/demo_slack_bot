@@ -1,11 +1,11 @@
-
 import os, time, logging
 from slack_bolt import App
 from slack_sdk import WebClient
 from datetime import datetime, timedelta
 
+
 class SlackMessageChecker:
-    """A class to check for old messages from a user in a Slack channel."""
+    """A class to check for messages older than a specified number of days from a user in a Slack channel."""
 
     SLACK_MESSAGE_AGE_LIMIT = 1 # days - older than messages will be printed
     SLACK_CHANNEL_HISTORY_AGE_LIMIT = 30 # days - how far back to fetch messages
