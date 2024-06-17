@@ -4,6 +4,7 @@
 ### Prerequisites
 * A Slack workflow that collects user information in a Slack channel.
 * A dedicated watchlist Slack channel to track older threads from the main channel.
+* Slack Bot based on slack_app_manifest.yaml
 
 ### Functionality
 * Creates a GitHub issue and posts it in response when the workflow is triggered by users.
