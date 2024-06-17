@@ -1,13 +1,14 @@
 
 ## Description
-Have a Slack workflow in place that collects information from users in a slack channel.
-Have a watchlist slack channel, where older threads from main channel will be tracked.
 
-The code will do the following:
-* Create Github issue and post it as response when Workflow is triggered by users.
-* Parse Workflow threads older than x days from the last y days.
-* For matched threads, check if Github issue is open, label it with watchlist label and post a message with the thread in the watchlist slack channel.
+### Prerequisites
+* A Slack workflow that collects user information in a Slack channel.
+* A dedicated watchlist Slack channel to track older threads from the main channel.
 
+### Functionality
+* Creates a GitHub issue and posts it in response when the workflow is triggered by users.
+* Parses workflow threads older than a specified number of days within the last specified number of days.
+* For matched threads, checks if the GitHub issue is open, labels it with a "watchlist" label, and posts a message with the thread in the watchlist Slack channel.
 
 ## Run app
 
