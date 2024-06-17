@@ -7,10 +7,11 @@
 * Slack Bot based on slack_app_manifest.yaml
 
 ### Functionality
-* SlackWorkflowBot: Creates a GitHub issue and posts it in response when the workflow is triggered by users.
+* SlackWorkflowBot:
+    - Creates a GitHub issue and posts it in response when the workflow is triggered by users.
 * SlackWatchlistBot:
-    ** Parses workflow threads older than a specified number of days within the last specified number of days.
-    ** For matched threads, checks if the GitHub issue is open, labels it with a "watchlist" label, and posts a message with the thread in the watchlist Slack channel.
+    - Parses workflow threads older than a specified number of days within the last specified number of days.
+    - For matched threads, checks if the GitHub issue is open, labels it with a "watchlist" label, and posts a message with the thread in the watchlist Slack channel.
 
 ## Run app
 
