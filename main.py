@@ -9,7 +9,7 @@ import requests
 import re
 
 
-class SlackMessageChecker:
+class SlackSupportBot:
     """
     Check for Slack Bot threads older than a specified number of days.
     If there is a match, check Github issue is open, add a label and send a message to the watchlist channel.
@@ -40,7 +40,7 @@ class SlackMessageChecker:
         self.app = App(token=self.bot_token)
         self.client = WebClient(token=self.bot_token)
         self.handler = SocketModeHandler(self.app, self.app_token)
-        self.__register_handlers()
+        self.__register_slack_event_handlers()
 
         # Github API
         self.__api_url = f'https://api.github.com/repos/{self.github_repo}/issues'
@@ -80,12 +80,12 @@ class SlackMessageChecker:
         target_time = current_time - seconds_ago
         return int(target_time)
 
-    def __is_older_than_days(self, ts):
-        """Check if a message is older than SLACK_MESSAGE_AGE_LIMIT days."""
+    def __is_timestamp_older_than_days(self, ts):
+        """Check if a timestamp is older than SLACK_MESSAGE_AGE_LIMIT days."""
         message_time = datetime.fromtimestamp(float(ts))
         return datetime.now() - message_time > timedelta(days=self.SLACK_MESSAGE_AGE_LIMIT)
 
-    def __post_message_in_slack_thread(self, channel_id, thread_ts, message):
+    def __send_slack_message(self, channel_id, thread_ts, message):
         """Post message in slack thread."""
         response = self.client.chat_postMessage(
             channel=channel_id,
@@ -98,7 +98,8 @@ class SlackMessageChecker:
         else:
             logging.error(f"Failed to post message in thread with ts: {thread_ts}")
 
-    def __get_message_permalink(self, channel_id, message_ts):
+    def __get_slack_message_permalink(self, channel_id, message_ts):
+        """Get permalink for a slack message."""
         try:
             response = self.client.chat_getPermalink(channel=channel_id, message_ts=message_ts)
             if response["ok"]:
@@ -110,7 +111,7 @@ class SlackMessageChecker:
             print(f"Exception occurred: {e}")
             return None
     
-    def __fetch_messages_from_workflow(self):
+    def __fetch_slack_messages_from_channel(self):
         """Fetch all messages from a workflow in a channel from the last SLACK_CHANNEL_HISTORY_AGE_LIMIT days."""
         messages = []
         cursor = None
@@ -123,7 +124,7 @@ class SlackMessageChecker:
         logging.debug(f"Found {len(messages)} messages from the workflow in channel {self.channel_id}.")
         return messages
 
-    def __is_workflow_message(self, message):
+    def __is_slack_workflow_message_sent_by_bot(self, message):
         """Check if a message is from a workflow bot."""
         if 'subtype' in message.keys() and message['subtype'] == 'bot_message' and message['bot_id'] == self.bot_id:
             return True
@@ -136,8 +137,8 @@ class SlackMessageChecker:
             return match.group(1)
         return None
 
-    def __get_github_issue_number_from_bot_reply(self, thread_ts):
-        """Return Github issue number posted by Support Bot in the first reply of the Workflow Slack thread."""
+    def __get_github_issue_number_from_slack_bot_reply(self, thread_ts):
+        """Return Github issue number posted by Slack Support Bot in the first reply of the Slack Workflow thread."""
         try:
             response = self.client.conversations_replies(channel=self.channel_id, ts=thread_ts)
             if response["ok"]:
@@ -164,28 +165,28 @@ class SlackMessageChecker:
             logging.error(f"Exception occurred while fetching replies for thread {thread_ts}: {str(e)}")
             return None     
 
-    def check_old_workflow_messages(self):
-        """Check for messages older than SLACK_MESSAGE_AGE_LIMIT days from a workflow in a channel."""
-        messages = self.__fetch_messages_from_workflow()
+    def parse_slack_idle_workflow_threads(self):
+        """Check for workflow threads older than SLACK_MESSAGE_AGE_LIMIT days."""
+        messages = self.__fetch_slack_messages_from_channel()
         for message in messages:
-            if self.__is_workflow_message(message):
-                if self.__is_older_than_days(message['ts']):
+            if self.__is_slack_workflow_message_sent_by_bot(message):
+                if self.__is_timestamp_older_than_days(message['ts']):
                     logging.info(f"Workflow message older than {self.SLACK_MESSAGE_AGE_LIMIT} days: {message['text']}")
-                    github_issue_number = self.__get_github_issue_number_from_bot_reply(message['ts'])
+                    github_issue_number = self.__get_github_issue_number_from_slack_bot_reply(message['ts'])
                     if github_issue_number is not None:
                         if self.__is_github_issue_open(github_issue_number):
-                            self.__add_label_to_github_issue(github_issue_number)
+                            self.__label_github_issue(github_issue_number)
                             thread_id = message['ts']
-                            self.__post_message_in_slack_thread(self.channel_id, thread_id, "This thread is now being monitored in the watchlist channel due to inactivity.")
+                            self.__send_slack_message(self.channel_id, thread_id, "This thread is now being monitored in the watchlist channel due to inactivity.")
 
-                            self.__post_message_in_slack_thread(self.watchlist_channel_id, None, f"{self.__get_message_permalink(self.channel_id, thread_id)}")
+                            self.__send_slack_message(self.watchlist_channel_id, None, f"{self.__get_slack_message_permalink(self.channel_id, thread_id)}")
                         else:
                             logging.info(f"Issue #{github_issue_number} is not open, no label added.")                 
   
-    def __register_handlers(self):
+    def __register_slack_event_handlers(self):
         """Register message handler for workflow posts."""
         @self.app.message()
-        def handle_workflow_posts(message):
+        def handle_workflow_reply(message):
             if message['username'] == "Support Ticket Helper Bot":
                 user_id = message["blocks"][0]["elements"][0]["elements"][8]["user_id"]
                 text = message['text']
@@ -200,7 +201,7 @@ class SlackMessageChecker:
                 thread_id = message['ts']
                 bot_reply = f"Hi there, <@{user_id}>! We created Github issue <{issue_url}|{title}> for you!"
                 # bot_reply = f"Your issue has been posted on Github: <{issue_url}|{title}>. Please follow up using this link."
-                self.__post_message_in_slack_thread(self.channel_id, thread_id, bot_reply)
+                self.__send_slack_message(self.channel_id, thread_id, bot_reply)
     
     def __create_github_issue(self, title, body=None, labels=None, assignees=None):
         """Creates Github issue."""
@@ -230,7 +231,7 @@ class SlackMessageChecker:
             logging.debug(response.json())
             return False
 
-    def __add_label_to_github_issue(self, issue_number, label='watchlist'):
+    def __label_github_issue(self, issue_number, label='watchlist'):
         """Add a label to a GitHub issue."""
         url = f'{self.__api_url}/{issue_number}/labels'
         data = {'labels': [label]}
@@ -248,8 +249,8 @@ class SlackMessageChecker:
 
 if __name__ == "__main__":
     try:
-        checker = SlackMessageChecker()
-        checker.check_old_workflow_messages()
+        checker = SlackSupportBot()
+        checker.parse_slack_idle_workflow_threads()
         checker.start()
     except EnvironmentError as e:
         logging.error(str(e))
