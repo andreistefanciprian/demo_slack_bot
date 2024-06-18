@@ -36,3 +36,9 @@ python main.py
 # start SlackWorkflowBot
 python workflow_bot.py
 ```
+
+## Run app from container
+
+```
+docker-compose up
+```

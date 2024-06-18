@@ -194,6 +194,9 @@ class SlackWatchlistBot:
                                 logging.info(f"{github_issue_https_url} already has the {self.WATCHLIST_LABEL} label.")
                         else:
                             logging.info(f"{github_issue_https_url} is not open, no label added.")
+        # Once all messages are parsed the script can be finished with exit code 0
+        logging.info("All messages were parsed.")
+        exit(0)
               
 
     def __is_github_issue_open(self, issue_number):
