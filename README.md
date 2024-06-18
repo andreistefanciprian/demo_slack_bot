@@ -46,7 +46,13 @@ python workflow_bot.py
 docker-compose up
 
 # or kubernetes cronjob
-kubectl create secret generic watchlist-slack-bot-secrets --from-env-file=.env
+kubectl create secret generic watchlist-slack-bot --from-env-file=.env
 kubectl apply -f infra/cronjob.yaml
 kubectl create job --from=cronjob/watchlist-slack-bot watchlist-slack-bot-init
+kubectl get cronjobs
+kubectl logs -l app=watchlist-slack-bot
+
+# cleanup
+kubectl delete secret watchlist-slack-bot
+kubectl delete -f infra/cronjob.yaml
 ```
