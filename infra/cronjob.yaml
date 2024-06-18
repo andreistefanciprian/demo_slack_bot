@@ -1,18 +1,23 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: slackbot-cronjob
+  name: watchlist-slack-bot
+  labels:
+    app: watchlist-slack-bot
 spec:
-  schedule: "0 21 * * *" # 9 PM daily
+  schedule: "*/5 * * * *" # Every 5 minutes
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            app: watchlist-slack-bot
         spec:
           containers:
-          - name: slackbot-container
+          - name: watchlist-slack-bot
             image: andreistefanciprian/watchlist-slack-bot:latest
             imagePullPolicy: Always
             envFrom:
             - secretRef:
-                name: slackbot-secrets
+                name: watchlist-slack-bot
           restartPolicy: OnFailure

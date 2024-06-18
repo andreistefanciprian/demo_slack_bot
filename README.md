@@ -40,5 +40,13 @@ python workflow_bot.py
 ## Run app from container
 
 ```
+# make sure .env is populated with env vars
+
+# run from container
 docker-compose up
+
+# or kubernetes cronjob
+kubectl create secret generic watchlist-slack-bot-secrets --from-env-file=.env
+kubectl apply -f infra/cronjob.yaml
+kubectl create job --from=cronjob/watchlist-slack-bot watchlist-slack-bot-init
 ```
