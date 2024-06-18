@@ -17,6 +17,7 @@ class SlackWatchlistBot:
 
     SLACK_MESSAGE_AGE_LIMIT = 0  # days - older than messages will be printed
     SLACK_CHANNEL_HISTORY_AGE_LIMIT = 1  # days - how far back to fetch messages
+    WATCHLIST_LABEL = 'watchlist'
 
     def __init__(self):
         # Set logging level from env var. Eg: export LOG_LEVEL=DEBUG
@@ -41,8 +42,9 @@ class SlackWatchlistBot:
         self.handler = SocketModeHandler(self.app, self.app_token)
 
         # Github API
-        self.__api_url = f'https://api.github.com/repos/{self.github_repo}/issues'
-        self.__headers = {
+        self.__github_api_url = f'https://api.github.com/repos/{self.github_repo}/issues'
+        self.__github_http_url =  f'https://github.com/{self.github_repo}/issues'
+        self.__github_headers = {
             'Authorization': f'token {self.github_token}',
             'Accept': 'application/vnd.github.v3+json'
         }
@@ -128,12 +130,25 @@ class SlackWatchlistBot:
             return True
         return False
 
-    def __get_github_issue_number_from_url(self, url):
-        """Extract GitHub issue number from URL."""
-        match = re.search(r'/issues/(\d+)', url)
+    def __get_github_issue_number_from_text(self, text):
+        """Extract GitHub issue number from text."""
+        match = re.search(r'/issues/(\d+)', text)
         if match:
             return match.group(1)
-        return None
+        return None  
+
+    def __github_issue_has_label(self, issue_number, label):
+        """Check if a GitHub issue already has a specific label."""
+        url = f'{self.__github_api_url}/{issue_number}'
+        response = requests.get(url, headers=self.__github_headers)
+        if response.status_code == 200:
+            issue_data = response.json()
+            labels = [lbl['name'] for lbl in issue_data.get('labels', [])]
+            return label in labels
+        else:
+            logging.error(f"Failed to fetch issue {issue_number}. Status code: {response.status_code}")
+            logging.debug(response.json())
+            return False
 
     def __get_github_issue_number_from_slack_bot_reply(self, thread_ts):
         """Return Github issue number posted by Slack Support Bot in the first reply of the Slack Workflow thread."""
@@ -143,15 +158,11 @@ class SlackWatchlistBot:
                 replies = response["messages"]
                 if len(replies) > 1:
                     first_reply = replies[1]  # The first reply (replies[0] is the original message)
-                    # logging.info(f"First reply in thread {thread_ts}: {first_reply['text']}")
-                    attachments = first_reply.get('attachments', [])
-                    if attachments:
-                        issue_url = attachments[0].get('from_url', '')
-                        issue_number = self.__get_github_issue_number_from_url(issue_url)
-                        logging.info(f"GitHub issue number from the first reply: {issue_number}")
+                    issue_number = self.__get_github_issue_number_from_text(first_reply['text'])
+                    if issue_number:
                         return issue_number
                     else:
-                        logging.info(f"No attachments found in the first reply of thread {thread_ts}")
+                        logging.info(f"No GitHub issue number found in the first reply of thread {thread_ts}")
                         return None
                 else:
                     logging.info(f"No replies in thread {thread_ts}")
@@ -161,7 +172,7 @@ class SlackWatchlistBot:
                 return None
         except Exception as e:
             logging.error(f"Exception occurred while fetching replies for thread {thread_ts}: {str(e)}")
-            return None     
+            return None
 
     def parse_slack_idle_workflow_threads(self):
         """Check for workflow threads older than SLACK_MESSAGE_AGE_LIMIT days."""
@@ -172,19 +183,23 @@ class SlackWatchlistBot:
                     logging.info(f"Workflow message older than {self.SLACK_MESSAGE_AGE_LIMIT} days: {message['text']}")
                     github_issue_number = self.__get_github_issue_number_from_slack_bot_reply(message['ts'])
                     if github_issue_number is not None:
+                        github_issue_https_url = os.path.join(self.__github_http_url, github_issue_number)
                         if self.__is_github_issue_open(github_issue_number):
-                            self.__label_github_issue(github_issue_number)
-                            thread_id = message['ts']
-                            self.__send_slack_message(self.channel_id, thread_id, "This thread is now being monitored in the watchlist channel due to inactivity.")
-
-                            self.__send_slack_message(self.watchlist_channel_id, None, f"{self.__get_slack_message_permalink(self.channel_id, thread_id)}")
+                            if not self.__github_issue_has_label(github_issue_number, self.WATCHLIST_LABEL):
+                                self.__label_github_issue(github_issue_number, self.WATCHLIST_LABEL)
+                                thread_id = message['ts']
+                                self.__send_slack_message(self.channel_id, thread_id, "This thread is now being monitored in the watchlist channel due to inactivity.")
+                                self.__send_slack_message(self.watchlist_channel_id, None, f"{self.__get_slack_message_permalink(self.channel_id, thread_id)}")
+                            else:
+                                logging.info(f"{github_issue_https_url} already has the {self.WATCHLIST_LABEL} label.")
                         else:
-                            logging.info(f"Issue #{github_issue_number} is not open, no label added.")                 
+                            logging.info(f"{github_issue_https_url} is not open, no label added.")
+              
 
     def __is_github_issue_open(self, issue_number):
         """Check if a GitHub issue is open. Return True if open, False if closed."""
-        url = f'{self.__api_url}/{issue_number}'
-        response = requests.get(url, headers=self.__headers)
+        url = f'{self.__github_api_url}/{issue_number}'
+        response = requests.get(url, headers=self.__github_headers)
         if response.status_code == 200:
             issue_data = response.json()
             return issue_data['state'] == 'open'
@@ -193,15 +208,16 @@ class SlackWatchlistBot:
             logging.debug(response.json())
             return False
 
-    def __label_github_issue(self, issue_number, label='watchlist'):
+    def __label_github_issue(self, issue_number, label):
         """Add a label to a GitHub issue."""
-        url = f'{self.__api_url}/{issue_number}/labels'
+        url = f'{self.__github_api_url}/{issue_number}/labels'
         data = {'labels': [label]}
-        response = requests.post(url, json=data, headers=self.__headers)
+        github_issue_https_url = os.path.join(self.__github_http_url, issue_number)
+        response = requests.post(url, json=data, headers=self.__github_headers)
         if response.status_code == 200 or response.status_code == 201:
-            logging.info(f'Successfully added label {label} to issue #{issue_number}.')
+            logging.info(f'Successfully added label {label} to issue {github_issue_https_url}.')
         else:
-            logging.error(f"Failed to add label to issue {issue_number}. Status code: {response.status_code}")
+            logging.error(f"Failed to add label to issue {github_issue_https_url}. Status code: {response.status_code}")
             logging.debug(response.json())
 
     def start(self):
