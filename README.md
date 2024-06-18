@@ -13,7 +13,29 @@
     - Parses workflow threads older than a specified number of days within the last specified number of days.
     - For matched threads, checks if the GitHub issue is open, labels it with a "watchlist" label, and posts a message with the thread in the watchlist Slack channel.
 
-## Run app
+
+## Run app from container
+
+```
+# make sure .env is populated with env vars
+
+# run from container
+make push
+docker-compose up
+
+# or kubernetes cronjob
+kubectl create secret generic watchlist-slack-bot --from-env-file=.env
+kubectl apply -f infra/cronjob.yaml
+kubectl create job --from=cronjob/watchlist-slack-bot watchlist-slack-bot-init
+kubectl get cronjobs
+kubectl logs -l app=watchlist-slack-bot
+
+# cleanup
+kubectl delete secret watchlist-slack-bot
+kubectl delete -f infra/cronjob.yaml
+```
+
+## Run script
 
 ```
 python3 -m venv .venv
@@ -35,24 +57,4 @@ python main.py
 
 # start SlackWorkflowBot
 python workflow_bot.py
-```
-
-## Run app from container
-
-```
-# make sure .env is populated with env vars
-
-# run from container
-docker-compose up
-
-# or kubernetes cronjob
-kubectl create secret generic watchlist-slack-bot --from-env-file=.env
-kubectl apply -f infra/cronjob.yaml
-kubectl create job --from=cronjob/watchlist-slack-bot watchlist-slack-bot-init
-kubectl get cronjobs
-kubectl logs -l app=watchlist-slack-bot
-
-# cleanup
-kubectl delete secret watchlist-slack-bot
-kubectl delete -f infra/cronjob.yaml
 ```
