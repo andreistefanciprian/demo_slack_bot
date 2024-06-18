@@ -1,0 +1,7 @@
+version: '3.8'
+
+services:
+  watchlist-slack-bot:
+    image: andreistefanciprian/watchlist-slack-bot:latest
+    env_file:
+      - .env

@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: slackbot-cronjob
+spec:
+  schedule: "0 21 * * *" # 9 PM daily
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: slackbot-container
+            image: andreistefanciprian/watchlist-slack-bot:latest
+            imagePullPolicy: Always
+            envFrom:
+            - secretRef:
+                name: slackbot-secrets
+          restartPolicy: OnFailure
