@@ -43,6 +43,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+    - name: List directory contents for debugging
+      run: ls -R
+      
     - name: Build and publish container image with tag
       uses: docker/build-push-action@v4
       with:
