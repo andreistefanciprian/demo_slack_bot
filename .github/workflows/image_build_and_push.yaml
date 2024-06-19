@@ -23,7 +23,9 @@ jobs:
         IMAGE: andreistefanciprian/watchlist-slack-bot
     runs-on: ubuntu-latest
     steps:
-
+    - name: Checkout
+      uses: actions/checkout@v4
+      
     - name: Generate build ID
       id: prep
       run: |
@@ -45,7 +47,7 @@ jobs:
 
     - name: List directory contents for debugging
       run: ls -R
-      
+
     - name: Build and publish container image with tag
       uses: docker/build-push-action@v4
       with:
