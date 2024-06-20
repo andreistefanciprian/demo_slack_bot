@@ -18,7 +18,8 @@ on:
   workflow_dispatch:
   
 jobs:
-  oci-push:
+  k8s-manifests-oci-image-push:
+    
     runs-on: ubuntu-latest
 
     steps:
