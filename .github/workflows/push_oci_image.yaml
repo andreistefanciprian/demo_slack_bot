@@ -1,0 +1,53 @@
+# publishing Kubernetes manifests bundled as OCI artifacts to DockerHub Registry
+name: push k8s oci artifact to DockerHub Registry
+
+on:
+  push:
+    tags:
+      - '*'
+    branches:
+      - 'main'
+    paths:
+      - 'infra/k8s/**'
+  pull_request:
+    branches: [ 'main' ]
+    paths:
+      - 'infra/k8s/**'
+      - '.github/workflows/push_oci_image.yaml'
+  
+  workflow_dispatch:
+  
+jobs:
+  oci-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate build ID
+        id: prep
+        run: |
+            branch=${GITHUB_REF##*/}
+            sha=${GITHUB_SHA::8}
+            ts=$(date +%s)
+            echo "::set-output name=BUILD_ID::${branch}-${sha}-${ts}"  
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@main
+
+      - name: Push manifests
+        run: |
+          flux push artifact oci://docker.io/${{ github.repository }}:${{ steps.prep.outputs.BUILD_ID }} \
+            --path="./infra/k8s" \
+            --source="$(git config --get remote.origin.url)" \
+            --revision="$(git branch --show-current)@sha1:$(git rev-parse HEAD)"
