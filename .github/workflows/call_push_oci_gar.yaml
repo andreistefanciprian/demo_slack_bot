@@ -23,3 +23,4 @@ jobs:
       app_name: ${{ secrets.APP_NAME }}
       wi_pool_provider_id: ${{ secrets.WI_POOL_PROVIDER_ID }}
       packager_gsa_id: ${{ secrets.PACKAGER_GSA_ID }}
+    secrets: inherit
