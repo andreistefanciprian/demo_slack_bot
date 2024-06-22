@@ -1,0 +1,25 @@
+name: Call Push OCI to GAR
+
+on:
+  push:
+    tags:
+      - '*'
+    branches:
+      - 'main'
+    paths:
+      - 'infra/k8s/**'
+  pull_request:
+    branches: [ 'main' ]
+    paths:
+      - 'infra/k8s/**'
+  workflow_dispatch:
+
+jobs:
+  call-push-oci-gar:
+    uses: andreistefanciprian/gh-reusable-workflows/blob/main/.github/workflows/k8s_oci_gar.yaml@main
+    with:
+      artifact_registry_host_name: ${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}
+      project_id: ${{ secrets.PROJECT_ID }}
+      app_name: ${{ secrets.APP_NAME }}
+      wi_pool_provider_id: ${{ secrets.WI_POOL_PROVIDER_ID }}
+      packager_gsa_id: ${{ secrets.PACKAGER_GSA_ID }}
