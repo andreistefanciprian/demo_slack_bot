@@ -20,9 +20,9 @@ on:
 
 jobs:
   call-push-oci-gar:
-    env:
-      OCI_REPO_NAME: "oci://${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}/${{ secrets.PROJECT_ID }}/manifests/${{ secrets.APP_NAME }}"
+    # env:
+    #   OCI_REPO_NAME: "oci://${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}/${{ secrets.PROJECT_ID }}/manifests/${{ secrets.APP_NAME }}"
     uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
     with:
-      oci_repo_name: ${{ env.OCI_REPO_NAME }}
+      oci_repo_name: 'oci://australia-southeast2-docker.pkg.dev/liquid-verbena-425321-k7/manifests/watchlist-slack-bot'
     secrets: inherit
