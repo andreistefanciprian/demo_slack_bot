@@ -17,9 +17,4 @@ on:
 jobs:
   call-push-oci-gar:
     uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
-    with:
-      artifact_registry_host_name: ${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}
-      project_id: ${{ secrets.PROJECT_ID }}
-      app_name: ${{ secrets.APP_NAME }}
-      wi_pool_provider_id: ${{ secrets.WI_POOL_PROVIDER_ID }}
-      packager_gsa_id: ${{ secrets.PACKAGER_GSA_ID }}
+    secrets: inherit
