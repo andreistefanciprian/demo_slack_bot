@@ -16,7 +16,7 @@ on:
 
 jobs:
   call-push-oci-gar:
-    uses: andreistefanciprian/gh-reusable-workflows/blob/main/.github/workflows/k8s_oci_gar.yaml@main
+    uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
     with:
       artifact_registry_host_name: ${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}
       project_id: ${{ secrets.PROJECT_ID }}
