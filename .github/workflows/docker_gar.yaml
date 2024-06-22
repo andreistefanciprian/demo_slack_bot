@@ -21,6 +21,8 @@ on:
 
 jobs:
   build-and-push-docker-gar:
+    env:
+      IMAGE_NAME: ${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}/${{ secrets.PROJECT_ID }}/${{ secrets.IMAGE_REPO_ID }}/${{ secrets.APP_NAME }}
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
@@ -53,8 +55,11 @@ jobs:
             ts=$(date +%s)
             echo "::set-output name=BUILD_ID::${branch}-${sha}-${ts}"  
 
-      - name: Build Docker image
-        run: docker build -f infra/Dockerfile . -t ${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}/${{ secrets.PROJECT_ID }}/${{ secrets.IMAGE_REPO_ID }}/${{ secrets.APP_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
+      - name: Build image
+        run: docker build -f infra/Dockerfile . -t ${{ env.IMAGE_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
 
-      - name: Push Docker image
-        run: docker push ${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}/${{ secrets.PROJECT_ID }}/${{ secrets.IMAGE_REPO_ID }}/${{ secrets.APP_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
+      - name: Push image
+        run: docker push ${{ env.IMAGE_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
+
+      - name: Tag image as latest
+        run: gcloud container images add-tag ${{ env.IMAGE_NAME }}:${{ steps.prep.outputs.BUILD_ID }} ${{ env.IMAGE_NAME }}:latest
