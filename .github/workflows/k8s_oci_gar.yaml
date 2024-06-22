@@ -55,10 +55,15 @@ jobs:
       - name: Setup Flux CLI
         uses: fluxcd/flux2/action@main
 
-      - name: Push manifests
+      - name: Push oci image
         run: |
           flux push artifact oci://${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}/${{ secrets.PROJECT_ID }}/manifests/${{ secrets.APP_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
             --path="./infra/k8s" \
             --source="$(git config --get remote.origin.url)" \
             --revision="$(git branch --show-current)@sha1:$(git rev-parse HEAD)"
+
+      - name: Tag oci image
+        run: |
+          flux tag artifact oci://${{ secrets.ARTIFACT_REGISTRY_HOST_NAME }}/${{ secrets.PROJECT_ID }}/manifests/${{ secrets.APP_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
+            --tag latest
             
