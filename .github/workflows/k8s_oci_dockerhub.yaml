@@ -1,5 +1,5 @@
 # publishing Kubernetes manifests bundled as OCI artifacts to DockerHub Registry
-name: k8s oci artifact
+name: k8s oci Dockerhub
 
 on:
   push:
@@ -9,16 +9,17 @@ on:
       - 'main'
     paths:
       - 'infra/k8s/**'
+      - '.github/workflows/k8s_oci_dockerhub.yaml'
   pull_request:
     branches: [ 'main' ]
     paths:
       - 'infra/k8s/**'
-      - '.github/workflows/push_oci_image.yaml'
+      - '.github/workflows/k8s_oci_dockerhub.yaml'
   
   workflow_dispatch:
   
 jobs:
-  k8s-manifests-oci-image-push:
+  k8s-oci-image-push-dockerhub:
     
     runs-on: ubuntu-latest
 
