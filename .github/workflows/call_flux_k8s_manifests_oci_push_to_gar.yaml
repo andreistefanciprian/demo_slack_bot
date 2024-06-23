@@ -12,10 +12,12 @@ on:
       - 'main'
     paths:
       - 'infra/k8s/**'
+      - '.github/workflows/call_flux_k8s_manifests_oci_push_to_gar.yaml'
   pull_request:
     branches: [ 'main' ]
     paths:
       - 'infra/k8s/**'
+      - '.github/workflows/call_flux_k8s_manifests_oci_push_to_gar.yaml'
   workflow_dispatch:
 
 jobs:
