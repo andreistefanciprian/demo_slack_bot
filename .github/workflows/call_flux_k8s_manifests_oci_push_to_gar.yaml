@@ -1,4 +1,4 @@
-name: Call Push OCI to GAR
+name: Flux push k8s manifests as OCI image to GAR
 
 permissions:
   contents: read
