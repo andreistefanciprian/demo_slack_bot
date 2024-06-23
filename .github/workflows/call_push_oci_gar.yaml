@@ -20,7 +20,23 @@ on:
 
 jobs:
   call-push-oci-gar:
-    uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
-    with:
-      app_name: watchlist-slack-bot
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate build ID
+        id: prep
+        run: |
+          branch=${GITHUB_REF##*/}
+          sha=${GITHUB_SHA::8}
+          ts=$(date +%s)
+          echo "::set-output name=BUILD_ID::${branch}-${sha}-${ts}"
+
+      - name: Call reusable workflow
+        uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
+        with:
+          app_name: watchlist-slack-bot
+          BUILD_ID: ${{ steps.prep.outputs.BUILD_ID }}
+        secrets: inherit
+    
