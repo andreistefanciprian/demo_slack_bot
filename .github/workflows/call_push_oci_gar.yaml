@@ -19,8 +19,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  call-push-oci-gar:
+  generate-build-id:
     runs-on: ubuntu-latest
+    outputs:
+      BUILD_ID: ${{ steps.prep.outputs.BUILD_ID }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,10 +35,9 @@ jobs:
           ts=$(date +%s)
           echo "::set-output name=BUILD_ID::${branch}-${sha}-${ts}"
 
-      - name: Call reusable workflow
-        uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
-        with:
-          app_name: watchlist-slack-bot
-          BUILD_ID: ${{ steps.prep.outputs.BUILD_ID }}
-        secrets: inherit
-    
+  call-push-oci-gar:
+    uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
+    with:
+      app_name: watchlist-slack-bot
+      BUILD_ID: ${{ needs.generate-build-id.outputs.BUILD_ID }}
+    secrets: inherit
