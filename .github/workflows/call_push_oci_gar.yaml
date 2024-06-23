@@ -36,6 +36,7 @@ jobs:
           echo "::set-output name=BUILD_ID::${branch}-${sha}-${ts}"
 
   call-push-oci-gar:
+    needs: generate-build-id
     uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
     with:
       app_name: watchlist-slack-bot
