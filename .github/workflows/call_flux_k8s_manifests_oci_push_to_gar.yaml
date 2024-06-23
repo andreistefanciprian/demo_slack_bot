@@ -35,7 +35,7 @@ jobs:
           ts=$(date +%s)
           echo "BUILD_ID=${branch}-${sha}-${ts}" >> $GITHUB_OUTPUT
 
-  call-push-oci-gar:
+  package-k8s-manifests-as-oci-and-push-to-gar:
     needs: generate-build-id
     uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/flux_k8s_manifests_oci_push_to_gar.yaml@main
     with:
