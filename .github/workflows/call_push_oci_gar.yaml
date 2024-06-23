@@ -40,5 +40,5 @@ jobs:
     uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
     with:
       app_name: watchlist-slack-bot
-      BUILD_ID: ${{ needs.generate-build-id.outputs.BUILD_ID }}
+      build_id: ${{ needs.generate-build-id.outputs.BUILD_ID }}
     secrets: inherit
