@@ -1,6 +1,3 @@
-
-
-
 name: Docker build and push to GAR
 
 permissions:
