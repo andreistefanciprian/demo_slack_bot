@@ -37,7 +37,7 @@ jobs:
 
   call-push-oci-gar:
     needs: generate-build-id
-    uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/k8s_oci_gar.yaml@main
+    uses: andreistefanciprian/gh-reusable-workflows/.github/workflows/flux_k8s_manifests_oci_push_to_gar.yaml@main
     with:
       app_name: watchlist-slack-bot
       build_id: ${{ needs.generate-build-id.outputs.BUILD_ID }}
