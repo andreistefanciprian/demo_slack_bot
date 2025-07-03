@@ -58,3 +58,21 @@ python main.py
 # start SlackWorkflowBot
 python workflow_bot.py
 ```
+
+## Setup github actions workflow env vars
+
+```
+PROJECT_ID="GCP-PROJECT"
+SA_NAME="github-runner"
+REGION="australia-southeast2"
+WI_POOL_PROVIDER_ID=$(gcloud iam workload-identity-pools providers describe go-demo-app --workload-identity-pool=go-demo-app --location global --format='get(name)')
+echo $WI_POOL_PROVIDER_ID
+
+gh secret set APP_NAME -b"watchlist-slack-bot"
+gh secret set PROJECT_ID -b"${GCP_PROJECT}"
+gh secret set OCI_REPO_ID -b"manifests"
+gh secret set IMAGE_REPO_ID -b"cmek-container-images"
+gh secret set ARTIFACT_REGISTRY_HOST_NAME -b"${REGION}-docker.pkg.dev"
+gh secret set PACKAGER_GSA_ID -b"${SA_NAME}@${GCP_PROJECT}.iam.gserviceaccount.com"
+gh secret set WI_POOL_PROVIDER_ID -b"${WI_POOL_PROVIDER_ID}"
+```
