@@ -3,6 +3,7 @@ name: Docker build and push to GAR
 permissions:
   contents: read
   id-token: write
+  attestations: write
 
 on:
   push:
